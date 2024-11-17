@@ -3,7 +3,7 @@ import Sidebar from '../Components/Sidebar'
 
 export default function Root() {
   return (
-    <div className="flex">
+    <div className="flex w-full">
       <Sidebar />
       <Outlet />
     </div>

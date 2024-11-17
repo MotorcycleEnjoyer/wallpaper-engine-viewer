@@ -34,7 +34,7 @@ export default function Sidebar() {
           Settings
         </NavLink>
       </div>
-      <div className="absolute bottom-0">
+      <div className="fixed bottom-0">
         <button className="flex-1 opacity-50 hover:opacity-100" onClick={toggleView}>
           {showSideBar ? '<' : '>'}
         </button>

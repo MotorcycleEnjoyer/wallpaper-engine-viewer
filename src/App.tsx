@@ -1,7 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './App.css'
 import Home from './Routes/Home'
-import Navbar from './Components/Navbar'
 import Wallpapers from './Routes/Wallpapers'
 import Root from './Routes/Root'
 import Settings from './Routes/Settings'
