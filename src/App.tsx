@@ -1,23 +1,23 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import "./App.css";
-import Home from "./Routes/Home";
-import Navbar from "./Components/Navbar";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import './App.css'
+import Home from './Routes/Home'
+import Navbar from './Components/Navbar'
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <Home />,
     children: [],
   },
-]);
+])
 
 function App() {
   return (
-    <div className="flex ">
+    <div className="flex">
       <Navbar />
-      <RouterProvider router={router} />;
+      <RouterProvider router={router} />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
