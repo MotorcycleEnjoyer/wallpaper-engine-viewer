@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import clsx from 'clsx'
 
 export default function Sidebar() {
   const [showSideBar, setShowSideBar] = useState(true)
@@ -14,21 +15,25 @@ export default function Sidebar() {
 
   return (
     <div>
-      {showSideBar && (
-        <div className="flex min-h-[100vh] flex-col text-center">
-          <NavLink to="/" className="navlink">
-            Home
-          </NavLink>
+      <div
+        className={clsx(
+          showSideBar
+            ? 'flex min-h-[100vh] flex-col bg-[#0f0f0f] text-center'
+            : 'hidden transition-all',
+        )}
+      >
+        <NavLink to="/" className="navlink">
+          Home
+        </NavLink>
 
-          <NavLink to={'wallpapers'} className="navlink">
-            WallPapers
-          </NavLink>
+        <NavLink to="wallpapers" className="navlink">
+          WallPapers
+        </NavLink>
 
-          <NavLink to={'wallpapers'} className="navlink">
-            WallPapers
-          </NavLink>
-        </div>
-      )}
+        <NavLink to="settings" className="navlink">
+          Settings
+        </NavLink>
+      </div>
       <div className="absolute bottom-0">
         <button className="flex-1 opacity-50 hover:opacity-100" onClick={toggleView}>
           {showSideBar ? '<' : '>'}
