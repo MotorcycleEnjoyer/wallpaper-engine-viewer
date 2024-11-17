@@ -14,7 +14,9 @@
       {
         "title": "wallpaper-engine-viewer",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "minWidth": 450,
+        "minHeight": 250
       }
     ],
     "security": {
