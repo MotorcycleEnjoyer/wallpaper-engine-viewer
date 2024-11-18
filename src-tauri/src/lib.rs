@@ -1,14 +1,12 @@
-use std::fs::{self, DirEntry};
-use std::path::Path;
-use std::{any, io};
+use std::{fs, io, path::Path};
 
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
-
-use winreg::enums::*;
-use winreg::RegKey;
+use serde_json;
 
 use dirs_next;
+
+mod reg_functions;
+use reg_functions::{get_config_path_registry, save_config_path_registry};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct UserPreferences {
@@ -20,41 +18,6 @@ struct UserPreferences {
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-fn get_config_path_registry() -> io::Result<String> {
-    let hklm = RegKey::predef(HKEY_CURRENT_USER);
-    let path = r"SOFTWARE\LocalWallpaperViewer\LocalWallpaperViewer";
-
-    let key = hklm.open_subkey(path)?;
-
-    let install_path_string: String = key.get_value("InstallDir")?;
-
-    Ok(install_path_string)
-}
-
-fn save_config_path_registry() {
-    let doc_dir = dirs_next::document_dir();
-    let mut path_to_documents = match doc_dir {
-        Some(info) => info,
-        None => return,
-    };
-
-    path_to_documents.push("local_wallpaper_viewer");
-
-    let hklm = RegKey::predef(HKEY_CURRENT_USER);
-    let path = r"SOFTWARE\LocalWallpaperViewer\LocalWallpaperViewer";
-
-    let key = match hklm.create_subkey(&path) {
-        Ok(key) => key.0,
-        Err(_) => return,
-    };
-
-    let key_result = key.set_value("InstallDir", &path_to_documents.as_os_str());
-    match key_result {
-        Ok(_) => println!("Made a new key for LocalWallpaperViewer"),
-        Err(_) => println!("Failed to make a new key for LocalWallpaperViewer"),
-    }
 }
 
 fn config_folder_exists() -> bool {
