@@ -10,6 +10,12 @@ use winreg::RegKey;
 
 use dirs_next;
 
+#[derive(Serialize, Deserialize, Debug)]
+struct UserPreferences {
+    is_sidebar_enabled: bool,
+    wallpaper_folder_location: String,
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -66,6 +72,27 @@ fn config_folder_exists() -> bool {
     }
 }
 
+fn save_user_preferences() -> io::Result<bool> {
+    let sample_preferences = UserPreferences {
+        is_sidebar_enabled: false,
+        wallpaper_folder_location: String::from("TestLocation"),
+    };
+
+    let str = serde_json::to_string(&sample_preferences);
+
+    let mut path_string = get_config_path_registry()?;
+    path_string.push_str("/settings.json");
+
+    let new_path = Path::new(&path_string);
+
+    let result = fs::write(new_path, str.unwrap());
+
+    match result {
+        Ok(_) => return Ok(true),
+        Err(error) => return Err(error),
+    }
+}
+
 fn make_config_folder() {
     let doc_dir = dirs_next::document_dir();
     let mut path_to_documents = match doc_dir {
@@ -83,6 +110,11 @@ fn make_config_folder() {
 
 #[tauri::command]
 fn button() {
+    let saved_user_preferences = save_user_preferences();
+    match saved_user_preferences {
+        Ok(_) => println!("Saved user preferences"),
+        Err(error) => println!("{}", error),
+    }
     if config_folder_exists() {
         match get_config_path_registry() {
             Ok(_) => println!("Exists"),
