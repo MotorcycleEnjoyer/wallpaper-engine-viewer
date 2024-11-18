@@ -13,7 +13,7 @@ pub fn set_settings_json_path_registry() {
         Ok(path) => path,
         Err(_) => return,
     };
-    path_to_settings_json.push_str("/settings.json");
+    path_to_settings_json.push_str("\\settings.json");
 
     set_reg_value("SettingsJson", &OsString::from(path_to_settings_json));
 }
