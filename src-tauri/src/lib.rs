@@ -6,18 +6,15 @@ use serde_json;
 use dirs_next;
 
 mod reg_functions;
-use reg_functions::{get_config_path_registry, save_config_path_registry};
+use reg_functions::{
+    get_install_path_registry, get_settings_json_path_registry, set_install_path_registry,
+    set_settings_json_path_registry,
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct UserPreferences {
     is_sidebar_enabled: bool,
     wallpaper_folder_location: String,
-}
-
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
 fn config_folder_exists() -> bool {
@@ -43,9 +40,7 @@ fn save_user_preferences() -> io::Result<bool> {
 
     let str = serde_json::to_string(&sample_preferences);
 
-    let mut path_string = get_config_path_registry()?;
-    path_string.push_str("/settings.json");
-
+    let path_string = get_settings_json_path_registry()?;
     let new_path = Path::new(&path_string);
 
     let result = fs::write(new_path, str.unwrap());
@@ -73,19 +68,20 @@ fn make_config_folder() {
 
 #[tauri::command]
 fn button() {
+    if config_folder_exists() {
+        match get_install_path_registry() {
+            Ok(_) => println!("Exists"),
+            Err(_) => set_install_path_registry(),
+        }
+    } else {
+        make_config_folder();
+        set_install_path_registry();
+        set_settings_json_path_registry();
+    }
     let saved_user_preferences = save_user_preferences();
     match saved_user_preferences {
         Ok(_) => println!("Saved user preferences"),
         Err(error) => println!("{}", error),
-    }
-    if config_folder_exists() {
-        match get_config_path_registry() {
-            Ok(_) => println!("Exists"),
-            Err(_) => save_config_path_registry(),
-        }
-    } else {
-        make_config_folder();
-        save_config_path_registry();
     }
 }
 
@@ -127,11 +123,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![
-            greet,
-            store_wallpaper_directory,
-            button,
-        ])
+        .invoke_handler(tauri::generate_handler![store_wallpaper_directory, button,])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
