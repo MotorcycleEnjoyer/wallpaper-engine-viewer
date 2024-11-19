@@ -16,7 +16,8 @@
         "width": 800,
         "height": 600,
         "minWidth": 450,
-        "minHeight": 250
+        "minHeight": 250,
+        "theme": "Dark"
       }
     ],
     "security": {
@@ -33,5 +34,5 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
-  }
+  }  
 }
