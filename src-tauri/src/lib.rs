@@ -84,7 +84,7 @@ fn first_time_setup() {
     }
 }
 
-fn get_user_preferences() -> io::Result<UserPreferences> {
+fn get_user_preferences_as_struct() -> io::Result<UserPreferences> {
     let settings_string = get_settings_json_path_registry()?;
     let settings_path = Path::new(&settings_string);
 
@@ -93,11 +93,28 @@ fn get_user_preferences() -> io::Result<UserPreferences> {
     Ok(info_for_rust)
 }
 
+fn get_user_preferences_as_string() -> io::Result<String> {
+    let settings_string = get_settings_json_path_registry()?;
+    let settings_path = Path::new(&settings_string);
+
+    let info = fs::read_to_string(settings_path)?;
+    Ok(info)
+}
+
+#[tauri::command]
+fn get_user_preferences() -> String {
+    let preferences = get_user_preferences_as_string();
+    match preferences {
+        Ok(info) => return info,
+        Err(err) => return err.to_string(),
+    }
+}
+
 #[tauri::command]
 fn store_wallpaper_directory(dir: String) -> bool {
     println!("{:?}", dir);
 
-    let preferences = get_user_preferences();
+    let preferences = get_user_preferences_as_struct();
     let mut preferences_object = match preferences {
         Ok(info) => info,
         Err(_) => return false,
@@ -119,6 +136,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             store_wallpaper_directory,
             first_time_setup,
+            get_user_preferences,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
