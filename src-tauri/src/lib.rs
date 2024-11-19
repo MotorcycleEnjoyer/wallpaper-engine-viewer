@@ -32,13 +32,16 @@ fn config_folder_exists() -> bool {
     }
 }
 
-fn save_user_preferences() -> io::Result<bool> {
+fn set_default_preferences() {
     let sample_preferences = UserPreferences {
         is_sidebar_enabled: false,
         wallpaper_folder_location: String::from("TestLocation"),
     };
+    save_user_preferences(sample_preferences);
+}
 
-    let str = serde_json::to_string(&sample_preferences);
+fn save_user_preferences(preferences: UserPreferences) -> io::Result<bool> {
+    let str = serde_json::to_string(&preferences);
 
     let path_string = get_settings_json_path_registry()?;
     let new_path = Path::new(&path_string);
@@ -67,7 +70,7 @@ fn make_config_folder() {
 }
 
 #[tauri::command]
-fn button() {
+fn first_time_setup() {
     if config_folder_exists() {
         match get_install_path_registry() {
             Ok(_) => println!("Exists"),
@@ -77,45 +80,35 @@ fn button() {
         make_config_folder();
         set_install_path_registry();
         set_settings_json_path_registry();
+        set_default_preferences()
     }
-    let saved_user_preferences = save_user_preferences();
-    match saved_user_preferences {
-        Ok(_) => println!("Saved user preferences"),
-        Err(error) => println!("{}", error),
-    }
+}
+
+fn get_user_preferences() -> io::Result<UserPreferences> {
+    let settings_string = get_settings_json_path_registry()?;
+    let settings_path = Path::new(&settings_string);
+
+    let info = fs::read_to_string(settings_path)?;
+    let info_for_rust = serde_json::from_str(&info)?;
+    Ok(info_for_rust)
 }
 
 #[tauri::command]
 fn store_wallpaper_directory(dir: String) -> bool {
     println!("{:?}", dir);
-    return true;
-}
 
-#[derive(Serialize, Deserialize)]
-struct Project {
-    file: String,
-    preview: String,
-    title: String,
-}
+    let preferences = get_user_preferences();
+    let mut preferences_object = match preferences {
+        Ok(info) => info,
+        Err(_) => return false,
+    };
 
-fn visit_dirs(dir: &Path) -> io::Result<Vec<String>> {
-    let mut data = vec![];
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.is_dir() {
-                visit_dirs(&path)?;
-            } else if path.file_name().unwrap() == "project.json" {
-                // println!("Found project.json in: {:?}", path);
-                let content = fs::read_to_string(path).unwrap();
-                let info: Project = serde_json::from_str(&content).unwrap();
-                println!("{}", info.title);
-                data.push(content.to_string());
-            }
-        }
+    preferences_object.wallpaper_folder_location = dir;
+    let status = save_user_preferences(preferences_object);
+    match status {
+        Ok(_) => return true,
+        Err(_) => return false,
     }
-    Ok(data)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -123,7 +116,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![store_wallpaper_directory, button,])
+        .invoke_handler(tauri::generate_handler![
+            store_wallpaper_directory,
+            first_time_setup,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
