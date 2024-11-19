@@ -111,7 +111,7 @@ fn get_user_preferences() -> String {
 }
 
 #[tauri::command]
-fn store_wallpaper_directory(dir: String) -> bool {
+fn set_wallpaper_directory(dir: String) -> bool {
     println!("{:?}", dir);
 
     let preferences = get_user_preferences_as_struct();
@@ -128,13 +128,30 @@ fn store_wallpaper_directory(dir: String) -> bool {
     }
 }
 
+#[tauri::command]
+fn set_sidebar_status(status: bool) -> bool {
+    let preferences = get_user_preferences_as_struct();
+    let mut preferences_object = match preferences {
+        Ok(info) => info,
+        Err(_) => return false,
+    };
+
+    preferences_object.is_sidebar_enabled = status;
+    let status = save_user_preferences(preferences_object);
+    match status {
+        Ok(_) => return true,
+        Err(_) => return false,
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
-            store_wallpaper_directory,
+            set_wallpaper_directory,
+            set_sidebar_status,
             first_time_setup,
             get_user_preferences,
         ])

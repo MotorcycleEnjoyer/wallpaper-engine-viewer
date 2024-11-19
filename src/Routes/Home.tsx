@@ -1,15 +1,13 @@
 import { open } from '@tauri-apps/plugin-dialog'
 import { invoke } from '@tauri-apps/api/core'
-// when using `"withGlobalTauri": true`, you may use
-// const { open } = window.__TAURI__.dialog;
+import { useEffect } from 'react'
 
 export default function Home() {
-  async function getDirectory() {
-    // if no directory found, load the default view that says (Select Wallpaper Directory)
-  }
+  useEffect(() => {
+    invoke('first_time_setup')
+  })
 
   async function handleClick() {
-    // Open a dialog
     const dir = await open({
       multiple: false,
       directory: true,
@@ -17,29 +15,14 @@ export default function Home() {
     if (!dir) {
       return
     }
-
-    const response = await invoke('store_wallpaper_directory', { dir })
-
-    if (response) {
-      console.log('The directory exists')
-    } else {
-      console.log('Directory does not exist.')
-    }
-    // TODO: Store this directory somewhere
+    await invoke('set_wallpaper_directory', { dir })
   }
 
   return (
-    <div className="p-4">
-      <h1>Home</h1>
+    <div className="w-full p-4">
+      <h1 className="p-4 text-3xl">Wallpaper Engine Viewer</h1>
       <div className="flex justify-center">
         <button onClick={handleClick}>Select Wallpaper Directory</button>
-        <button
-          onClick={async () => {
-            invoke('button')
-          }}
-        >
-          CLICK ME
-        </button>
       </div>
     </div>
   )

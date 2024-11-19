@@ -1,15 +1,23 @@
 import { NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
+import { invoke } from '@tauri-apps/api/core'
 
 export default function Sidebar() {
   const [showSideBar, setShowSideBar] = useState(true)
 
+  async function getPreferences() {
+    let preferences = JSON.parse(await invoke('get_user_preferences'))
+    setShowSideBar(preferences.is_sidebar_enabled)
+  }
+
   useEffect(() => {
     // fetch stored user preference on sidebar
+    getPreferences()
   }, [])
 
   function toggleView() {
+    invoke('set_sidebar_status', { status: !showSideBar })
     setShowSideBar((prevState) => !prevState)
   }
 
