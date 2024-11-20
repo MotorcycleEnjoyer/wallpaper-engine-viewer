@@ -52,6 +52,6 @@ fn set_reg_value(keyname: &str, keyvalue: &OsString) -> io::Result<bool> {
     let key_result = key.set_value(keyname, keyvalue);
     match key_result {
         Ok(_) => Ok(true),
-        Err(err) => panic!("{:?}", err),
+        Err(err) => Err(err),
     }
 }
