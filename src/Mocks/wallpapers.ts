@@ -1,7 +1,11 @@
 export type WallpaperInfoType = {
-  title: string,
-  previewFilePath: string,
-  filePath: string,
+  project_id: string
+  project_json: {
+    title: string
+    preview: string
+    file: string
+    type: string
+  }
 }
 
 export const dummyInfo = [

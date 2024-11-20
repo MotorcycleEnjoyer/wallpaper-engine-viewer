@@ -1,26 +1,37 @@
 import { useEffect, useState } from 'react'
 import WallpaperCard from '../Components/WallpaperCard'
-import { dummyInfo, WallpaperInfoType } from '../Mocks/wallpapers'
 import { invoke } from '@tauri-apps/api/core'
+import { WallpaperInfoType } from '../Mocks/wallpapers'
 
 export default function Wallpapers() {
   const [wallpapers, setWallpapers] = useState<WallpaperInfoType[] | []>([])
+  const [wallpaperDirectory, setWallpaperDirectory] = useState('')
   const [loading, setLoading] = useState(false)
+
+  async function getPreferences() {
+    let preferencesString = await invoke('get_user_preferences')
+    console.log(preferencesString)
+    let {
+      wallpaper_folder_location,
+    }: { is_sidebar_enabled: boolean; wallpaper_folder_location: string } = JSON.parse(
+      preferencesString as string,
+    )
+    setWallpaperDirectory(wallpaper_folder_location)
+  }
+
+  useEffect(() => {
+    getPreferences()
+  }, [])
 
   async function fetch_all_wallpapers() {
     setLoading(true)
     let info = await invoke('get_all_wallpapers')
-
-    // minimum delay of 250ms
-    setTimeout(() => {
-      setLoading(false)
-    }, 250)
-
-    console.log(info)
+    let allInfo: WallpaperInfoType[] = JSON.parse(info as string)
+    setWallpapers(allInfo)
+    setLoading(false)
   }
 
   useEffect(() => {
-    setWallpapers(dummyInfo)
     fetch_all_wallpapers()
   }, [])
 
@@ -70,7 +81,7 @@ export default function Wallpapers() {
     <div className="flex-1">
       <div className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10">
         {wallpapers.map((info) => (
-          <WallpaperCard {...info} />
+          <WallpaperCard info={info} wallpaperDirectory={wallpaperDirectory} />
         ))}
       </div>
     </div>

@@ -1,7 +1,9 @@
-use std::{fs, io, path::Path};
+use std::{fs, io, path::Path, process::Command};
 
 use serde::{Deserialize, Serialize};
 use serde_json;
+
+use walkdir::WalkDir;
 
 use dirs_next;
 
@@ -15,6 +17,20 @@ use reg_functions::{
 struct UserPreferences {
     is_sidebar_enabled: bool,
     wallpaper_folder_location: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ProjectJSON {
+    title: String,
+    preview: String,
+    file: String,
+    r#type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct WallpaperInfo {
+    project_json: ProjectJSON,
+    project_id: String,
 }
 
 fn config_folder_exists() -> bool {
@@ -102,6 +118,50 @@ fn get_user_preferences_as_string() -> io::Result<String> {
 }
 
 #[tauri::command]
+fn get_all_wallpapers() -> String {
+    // iterate over all folders
+    let preferences_result = get_user_preferences_as_struct();
+    let preferences = match preferences_result {
+        Ok(info) => info,
+        Err(_) => return String::from("{}"),
+    };
+
+    let mut all_info: Vec<WallpaperInfo> = Vec::new();
+    for entry in WalkDir::new(&preferences.wallpaper_folder_location) {
+        let entry = entry.unwrap();
+        if entry.file_name() == "project.json" {
+            let folder_name = entry
+                .path()
+                .strip_prefix(&preferences.wallpaper_folder_location)
+                .unwrap()
+                .parent()
+                .unwrap()
+                .to_string_lossy();
+
+            let data = fs::read_to_string(entry.path()).unwrap();
+            let info_as_json: serde_json::Result<ProjectJSON> = serde_json::from_str(&data);
+            match info_as_json {
+                Ok(data) => {
+                    if data.r#type.to_lowercase() == "video" {
+                        println!("{:?}", data);
+
+                        let wallpaper_info = WallpaperInfo {
+                            project_json: data,
+                            project_id: String::from(folder_name),
+                        };
+
+                        all_info.push(wallpaper_info);
+                    }
+                }
+                Err(_) => println!("JSON file didn't have file specified."),
+            };
+        }
+    }
+
+    return serde_json::to_string(&all_info).unwrap();
+}
+
+#[tauri::command]
 fn get_user_preferences() -> String {
     let preferences = get_user_preferences_as_string();
     match preferences {
@@ -144,6 +204,14 @@ fn set_sidebar_status(status: bool) -> bool {
     }
 }
 
+#[tauri::command]
+fn play_video(video_path: String) {
+    Command::new("cmd")
+        .args(["/C", &video_path])
+        .output()
+        .expect("failed to execute process");
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -154,6 +222,8 @@ pub fn run() {
             set_sidebar_status,
             first_time_setup,
             get_user_preferences,
+            get_all_wallpapers,
+            play_video
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

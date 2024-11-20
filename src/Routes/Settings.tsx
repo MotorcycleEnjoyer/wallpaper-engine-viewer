@@ -34,7 +34,7 @@ export default function Settings() {
   }, [])
 
   return (
-    <div className="m-auto w-3/4 max-w-[500px]">
+    <div className="ml-auto mr-auto w-3/4 max-w-[500px]">
       {Object.entries(preferences).map(([key, value]) => (
         <div key={key} className="setting">
           <div className="rounded-2xl bg-black">
